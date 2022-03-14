@@ -2,6 +2,17 @@
 1. Static Array
 1. Dynamic Array
 
+# Big O of Arrays
+Operation | Big O
+-|-
+Cost of accessing elements | O(1)
+Insert/Remove from beginning | O(n)
+Insert/Remove from end | O(1)
+Insert/Remove from middle | O(n)
+
+[Read more](https://medium.com/@mckenziefiege/arrays-linked-lists-and-big-o-notation-486727b6259b "Arrays, Linked Lists, and Big O Notation
+")
+
 # Questions
 1. reverse String
 1. merge 2 sorted arrays into one
