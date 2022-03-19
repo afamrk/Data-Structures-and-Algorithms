@@ -1,5 +1,6 @@
 # Hash table with array
 
+## Javascript
 ```javascript
 class HashTable {
   constructor(length){
