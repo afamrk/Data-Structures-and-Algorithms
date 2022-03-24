@@ -1,6 +1,6 @@
 # Binary Search Tree
 
-### javascript
+### Javascript
 ```javascript
 class Node {
   constructor(value){
