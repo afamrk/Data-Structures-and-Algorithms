@@ -310,6 +310,6 @@ class BST:
     
     def deletebst(self):
         self.root.value = None
-	self.root.left = None
-	self.root.right = None
+	    self.root.left = None
+	    self.root.right = None
 ```
