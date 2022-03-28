@@ -170,146 +170,222 @@ test()
 
 ### Python
 ```python
+import json
 class Node:
-    def __init__(self, value):
+    def __init__(self, value, parent=None):
         self.value = value
-        self.left = None
-        self.right = None
-    
+        self.leftChild = None
+        self.rightChild = None
+        self.parent = parent
+
+    def hasLeftChild(self):
+        return self.leftChild
+
+    def hasRightChild(self):
+        return self.rightChild
+
+    def isLeftChild(self):
+        return self.parent and self.parent.leftChild == self
+
+    def isRightChild(self):
+        return self.parent and self.parent.rightChild == self
+
+    def isRoot(self):
+        return not self.parent
+
     def isLeaf(self):
-        if (not self.left) and (not self.right):
-            return True
-    
-    def isBoth(self):
-        if self.left and self.right:
-            return True
-    
+        return not (self.rightChild or self.leftChild)
+
+    def hasAnyChildren(self):
+        return self.rightChild or self.leftChild
+
+    def hasBothChildren(self):
+        return self.rightChild and self.leftChild
+
+    def toJson(self):
+        json_data = {"value": self.value,
+                     "left": self.leftChild.toJson() if self.hasLeftChild() else "null",
+                     "right": self.rightChild.toJson() if self.hasRightChild() else "null"}
+        return json_data
+
+
 class BST:
     def __init__(self):
         self.root = None
-    
+        self._length = 0
+
+    def __len__(self):
+        return self.length
+
+    @property
+    def length(self):
+        return self._length
+
+    def __contains__(self, value):
+        return self.search(value)
+
+    def __bool__(self):
+        return True if self.root else False
+
     def insert(self, value):
         if self.root is None:
             self.root = Node(value)
         else:
             self._insert(value, self.root)
-    
-    def _insert(self, value, root):
-        if root is None:
-            root = Node(value)
-        elif value < root.value:
-            if root.left is None:
-                root.left = Node(value)
+        self._length += 1
+
+    def _insert(self, value, current_root):
+        if value == current_root.value:
+            raise ValueError('item already present')
+        elif value < current_root.value:
+            if current_root.hasLeftChild():
+                self._insert(value, current_root.leftChild)
             else:
-                self._insert(value, root.left)
+                current_root.leftChild = Node(value, current_root)
         else:
-            if root.right is None:
-                root.right = Node(value)
+            if current_root.hasRightChild():
+                self._insert(value, current_root.rightChild)
             else:
-                self._insert(value, root.right)
-    
-    def preorder(self):
-        self._preorder(self.root)
-    
-    def _preorder(self, current):
-        if current is None:
-            return None
-        else:
-            print(current.value)
-            self._preorder(current.left)
-            self._preorder(current.right)
-            
-    def preorder(self):
-        self._preorder(self.root)
-    
-    def _preorder(self, current):
-        if current is None:
-            return None
-        else:
-            print(current.value)
-            self._preorder(current.left)
-            self._preorder(current.right)
-            
-    def inorder(self):
-        self._inorder(self.root)
-    
-    def _inorder(self, current):
-        if current is None:
-            return None
-        else:
-            self._inorder(current.left)
-            print(current.value)
-            self._inorder(current.right)
-    
-    def postorder(self):
-        self._postorder(self.root)
-    
-    def _postorder(self, current):
-        if current is None:
-            return None
-        else:
-            self._postorder(current.left)
-            self._postorder(current.right)
-            print(current.value)
-            
-    def levelorder(self):
-        if self.root is None:
-            return None
-        q = Queue()
-        q.put(self.root)
-        while (not q.empty()):
-            node = q.get()
-            print(node.value)
-            if node.left:
-                q.put(node.left)
-            if node.right:
-                q.put(node.right)
-        
+                current_root.rightChild = Node(value, current_root)
+
     def search(self, value):
         current = self.root
         while current:
             if current.value == value:
-                return True
+                return current
             elif current.value > value:
-                current = current.left
+                current = current.leftChild
             else:
-                current = current.right
+                current = current.rightChild
         return False
-    
+
     def successor(self, current):
-        current = current.right
-        while current.left:
-            current = current.left
+        current = current.rightChild
+        while current.leftChild:
+            current = current.leftChild
         return current
-    
-    def delete(self,value):
+
+    def delete(self, value):
+        if self.root is None:
+            raise IndexError('empty tree')
+
         self._delete(self.root, value)
-    
+        self._length -= 1
+
     def _delete(self, current, value):
+        while current and current.value != value:
+            if current.value > value:
+                current = current.leftChild
+            else:
+                current = current.rightChild
+
         if current is None:
-            return current
-        if current.value > value:
-            current.left = self._delete(current.left, value)
-        elif current.value < value:
-            current.right = self._delete(current.right, value)
+            raise KeyError('key not found')
+
+        #case 1: node is a leaf
+        if current.isLeaf():
+            if current == self.root:
+                self.root = None
+            else:
+                if current.isLeftChild():
+                    current.parent.leftChild = None
+                else:
+                    current.parent.rightChild = None
+
+        #case 2: node has 2 children
+        elif current.hasBothChildren():
+            successor = self.successor(current)
+            self._delete(successor, successor.value)
+            successor.rightChild = current.rightChild
+            successor.leftChild = current.leftChild
+
+            if current == self.root:
+                self.root = successor
+            else:
+                if current.isLeftChild():
+                    current.parent.leftChild = successor
+                else:
+                    current.parent.rightChild = successor
+
+            #changing parent of left&right child, if the successor is
+            #its right or left child that node will be deleted, so we
+            #nedd to check that
+            if successor.leftChild:
+                successor.leftChild.parent = successor
+            if successor.rightChild:
+                successor.rightChild.parent = successor
+        #case 3: single child
         else:
-            if current.left is None:
-                temp = current.right
-                current = None
-                return temp
-            if current.right is None:
-                temp = current.left
-                current = None
-                return temp
-            
-            temp = self.successor(current).value
-            current.value = temp
-            current.right = self._delete(current.right, temp)
-        
-        return current
-    
+            if current.hasLeftChild():
+                child = current.leftChild
+            else:
+                child = current.rightChild
+
+            if current == self.root:
+                self.root = child
+                child.parent = None
+            else:
+                if current.isLeftChild():
+                    current.parent.leftChild = child
+                else:
+                    current.parent.rightChild = child
+
+                child.parent =current.parent
+
     def deletebst(self):
         self.root.value = None
-	self.root.left = None
-	self.root.right = None
+        self.root.left = None
+        self.root.right = None
+
+    def toJson(self):
+        if self.root is None:
+            return None
+        json_data = {'value':self.root.value,
+                     'left': self.root.leftChild.toJson() if self.root.hasLeftChild() else 'null',
+                     'right': self.root.rightChild.toJson() if self.root.hasRightChild() else 'null'}
+        return json.dumps(json_data)
 ```
+#### Testing
+```python
+tree = BST()
+tree.insert(13)
+tree.insert(4)
+tree.insert(6)
+tree.insert(20)
+tree.insert(170)
+tree.insert(15)
+tree.insert(1)
+tree.insert(8)
+tree.insert(7)
+tree.insert(18)
+tree.insert(17)
+tree.insert(19)
+tree.insert(150)
+tree.insert(160)
+tree.insert(140)
+tree.insert(9)
+tree.insert(-2)
+tree.insert(-3)
+tree.insert(-1)
+print(tree.toJson())
+tree.delete(13)
+print('After Deleting\n'+'-'*10)
+print(tree.toJson())
+
+```
+##### Output
+```json
+{"value": 13, "left": {"value": 4, "left": {"value": 1, "left": {"value": -2, "left": {"value": -3, "left": "null", "right": "null"}, "right": {"value": -1, "left": "null", "right": "null"}}, "right": "null"}, "right": {"value": 6, "left": "null", "right": {"value": 8, "left": {"value": 7, "left": "null", "right": "null"}, "right": {"value": 9, "left": "null", "right": "null"}}}}, "right": {"value": 20, "left": {"value": 15, "left": "null", "right": {"value": 18, "left": {"value": 17, "left": "null", "right": "null"}, "right": {"value": 19, "left": "null", "right": "null"}}}, "right": {"value": 170, "left": {"value": 150, "left": {"value": 140, "left": "null", "right": "null"}, "right": {"value": 160, "left": "null", "right": "null"}}, "right": "null"}}}
+After Deleting
+----------
+{"value": 15, "left": {"value": 4, "left": {"value": 1, "left": {"value": -2, "left": {"value": -3, "left": "null", "right": "null"}, "right": {"value": -1, "left": "null", "right": "null"}}, "right": "null"}, "right": {"value": 6, "left": "null", "right": {"value": 8, "left": {"value": 7, "left": "null", "right": "null"}, "right": {"value": 9, "left": "null", "right": "null"}}}}, "right": {"value": 20, "left": {"value": 18, "left": {"value": 17, "left": "null", "right": "null"}, "right": {"value": 19, "left": "null", "right": "null"}}, "right": {"value": 170, "left": {"value": 150, "left": {"value": 140, "left": "null", "right": "null"}, "right": {"value": 160, "left": "null", "right": "null"}}, "right": "null"}}}
+
+```
+
+**Use this [Website](https://vanya.jp.net/vtree/ "Json to Tree Diagram") to view the json as a tree diagram**
+
+![Output](./before.jpg)
+
+#### After Deleting
+
+![Output](./after.jpg)
