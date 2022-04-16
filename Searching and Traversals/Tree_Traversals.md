@@ -22,8 +22,6 @@ def inorder(node, result=None):
     result.append(node.value)
     inorder(node.rightChild, result)
     return result
-
-
 ```
 
 ### Pre Order

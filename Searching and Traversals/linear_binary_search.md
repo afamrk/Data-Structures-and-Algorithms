@@ -32,18 +32,18 @@ def search(arr, value):
 
 # Binary Search (**using recursion**)
 ```python
-def rec_search(arr, value):
+def bs(arr, value):
+    return binary_search(arr, value, 0, len(arr)-1)
 
-    if not arr:
-        return -1
+def binary_search(arr, value, l, r):
 
-    mid = len(arr)-1//2
-
+    mid = (l+r)//2
     if arr[mid] == value:
-        return mid
-
-    if arr[mid] > value:
-        rec_search(arr[0:mid],value)
+        return True
+    if l >= r:
+        return False
+    elif arr[mid] < value:
+        return binary_search(arr, value,mid+1, r)
     else:
-        rec_search(arr[mid+1:],value)
+        return binary_search(arr, value, l, mid)
 ```

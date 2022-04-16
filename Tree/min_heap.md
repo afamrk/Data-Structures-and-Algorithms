@@ -1,6 +1,7 @@
 # Min Heap
 
 ### Python
+#### Using Arrays
 ```python
 class MinHeap:
     def __init__(self):
