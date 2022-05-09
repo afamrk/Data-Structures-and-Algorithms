@@ -51,6 +51,18 @@ def insertion_sort(arr):
     return arr
 ```
 
+```python
+def insertion_sort(data):
+    for i in range(1,len(data)):
+        value = data[i]
+        for j in range(i,0,-1):
+            if value < data[j-1]:
+                data[j], data[j-1] = data[j-1], data[j]
+            else:
+                break
+    return data
+```
+
 # Shell Sort
 ```python
 def shell_short(arr):
